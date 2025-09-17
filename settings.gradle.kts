@@ -21,4 +21,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "SmartSpacesW3"
 include(":app")
- 
+include(":app")

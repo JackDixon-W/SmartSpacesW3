@@ -36,6 +36,12 @@ android {
     buildFeatures {
         viewBinding = true
     }
+
+    packaging {
+        resources {
+            excludes += arrayOf("META-INF/LICENSE.md", "META-INF/NOTICE.md")
+        }
+    }
 }
 
 dependencies {
@@ -51,4 +57,9 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+
+    implementation(libs.weka.stable) {
+        exclude(group="com.github.vbmacher", module="java-cup")
+        exclude(group="jakarta.activation", module="jakarta.activation-api")
+    }
 }
