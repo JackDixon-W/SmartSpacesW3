@@ -6,13 +6,19 @@ import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import com.example.smartspacesw3.WekaClassifier
+import com.example.smartspacesw3.createWekaInstancesHeader
 import com.example.smartspacesw3.databinding.FragmentDashboardBinding
+import com.example.smartspacesw3.loadWekaModelFromAssets
+import weka.classifiers.Classifier
+import weka.core.Instances
 
 class DashboardFragment : Fragment(), SensorEventListener {
 
@@ -28,6 +34,14 @@ class DashboardFragment : Fragment(), SensorEventListener {
     private val binding get() = _binding!!
     private lateinit var dashboardViewModel: DashboardViewModel
 
+    private var accelerometerData: FloatArray? = null
+    private var linearAccelerometerData: FloatArray? = null
+    private var gyroscopeData: FloatArray? = null
+    private var magnetometerData: FloatArray? = null
+    private var sensorBuffer: MutableList<FloatArray> = mutableListOf()
+
+    private lateinit var wekaClassifier: WekaClassifier
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         sensorManager = requireContext().getSystemService(Context.SENSOR_SERVICE) as SensorManager
@@ -35,6 +49,7 @@ class DashboardFragment : Fragment(), SensorEventListener {
         linearAccelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION)
         gyroscope = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE)
         magnetometer = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD)
+        wekaClassifier = WekaClassifier(requireContext(), "J48T_3(L).model")
     }
 
     override fun onCreateView(
@@ -49,7 +64,7 @@ class DashboardFragment : Fragment(), SensorEventListener {
         val root: View = binding.root
 
 
-        // Corrected code to observe the new sensor LiveData
+        // Obersves the livedata models
         dashboardViewModel.accelerometerData.observe(viewLifecycleOwner) { data ->
             binding.textAccelerometer.text = data
         }
@@ -64,6 +79,22 @@ class DashboardFragment : Fragment(), SensorEventListener {
 
         dashboardViewModel.magnetometerData.observe(viewLifecycleOwner) { data ->
             binding.textMagnetometer.text = data
+        }
+
+        dashboardViewModel.predictedActivity.observe(viewLifecycleOwner) { data ->
+            binding.textActivity.text = data
+        }
+
+        val testClassifier: Classifier? = loadWekaModelFromAssets(requireContext(), "J48T_3(L).model")
+
+        if (testClassifier != null) {
+            // The model was loaded successfully.
+            // You can now proceed to use it for classification.
+            Log.d("WekaModel", "Model loaded successfully: ${testClassifier.javaClass.simpleName}")
+        } else {
+            // The model failed to load.
+            // Check the logcat for the exception stack trace.
+            Log.e("WekaModel", "Failed to load the model.")
         }
 
         return root
@@ -98,17 +129,23 @@ class DashboardFragment : Fragment(), SensorEventListener {
         when (event.sensor.type) {
             Sensor.TYPE_ACCELEROMETER -> {
                 dashboardViewModel.updateAccelerometerData(x, y, z)
+                accelerometerData = event.values.clone()
             }
             Sensor.TYPE_LINEAR_ACCELERATION -> {
                 dashboardViewModel.updateLinearAccelerometerData(x, y, z)
+                linearAccelerometerData = event.values.clone()
             }
             Sensor.TYPE_GYROSCOPE -> {
                 dashboardViewModel.updateGyroscopeData(x, y, z)
+                gyroscopeData = event.values.clone()
             }
             Sensor.TYPE_MAGNETIC_FIELD -> {
                 dashboardViewModel.updateMagnetometerData(x, y, z)
+                //magnetometerData = event.values.clone()
             }
         }
+
+        bufferSensorData()
     }
 
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
@@ -118,5 +155,67 @@ class DashboardFragment : Fragment(), SensorEventListener {
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+    }
+
+    private fun bufferSensorData() {
+        // Ensure all sensor data is available before proceeding
+        //if (accelerometerData != null && linearAccelerometerData != null && gyroscopeData != null && magnetometerData != null) {
+        if (accelerometerData != null && linearAccelerometerData != null && gyroscopeData != null) {
+
+            val combinedData = floatArrayOf(
+                *accelerometerData!!,
+                *linearAccelerometerData!!,
+                *gyroscopeData!!,
+            )
+
+            sensorBuffer.add(combinedData)
+
+            // 50 readings = 1 second (at 50hz)
+            val maxBufferSize = 250
+            if (sensorBuffer.size > maxBufferSize) {
+                sensorBuffer.removeAt(0)
+            }
+
+            if (sensorBuffer.size >= maxBufferSize) {
+                val features = calcMean()
+
+                if (features != null) {
+                    val predictedActivity = wekaClassifier.classify(features)
+
+                    Log.d("WekaClassification", "Predicted Activity: $predictedActivity")
+
+                    dashboardViewModel.updatePredictedActivity(predictedActivity)
+                }
+            }
+        }
+    }
+
+    private fun calcMean(): FloatArray? {
+        // Prevent division by 0
+        if (sensorBuffer.isEmpty()) {
+            return null
+        }
+
+        // 3 axis * 4 sensors in this case
+        //val numFeatures = 12
+        // 3 axis * 3 sensors
+        val numFeatures = 9
+        val featureSums = FloatArray(numFeatures)
+
+        // Sum values for each feature
+        for (reading in sensorBuffer) {
+            for (i in 0 until numFeatures) {
+                featureSums[i] += reading[i]
+            }
+        }
+
+        // Calculate the mean
+        val numReadings = sensorBuffer.size
+        val meanFeatures = FloatArray(numFeatures)
+        for (i in 0 until numFeatures) {
+            meanFeatures[i] = featureSums[i] / numReadings
+        }
+
+        return meanFeatures
     }
 }

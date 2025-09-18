@@ -18,6 +18,9 @@ class DashboardViewModel : ViewModel() {
     private val _magnetometerData = MutableLiveData<String>()
     val magnetometerData: LiveData<String> = _magnetometerData
 
+    private val _predictedActivity = MutableLiveData<String>()
+    val predictedActivity: LiveData<String> = _predictedActivity
+
     fun updateAccelerometerData(x: Float, y: Float, z: Float) {
         _accelerometerData.value = "Accelerometer\nX: $x\nY: $y\nZ: $z"
     }
@@ -32,5 +35,9 @@ class DashboardViewModel : ViewModel() {
 
     fun updateMagnetometerData(x: Float, y: Float, z: Float) {
         _magnetometerData.value = "Magnetometer\nX: $x\nY: $y\nZ: $z"
+    }
+
+    fun updatePredictedActivity(activity: String) {
+        _predictedActivity.value = "Activity: $activity"
     }
 }
