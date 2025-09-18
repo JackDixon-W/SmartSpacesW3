@@ -49,7 +49,7 @@ class DashboardFragment : Fragment(), SensorEventListener {
         linearAccelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION)
         gyroscope = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE)
         magnetometer = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD)
-        wekaClassifier = WekaClassifier(requireContext(), "J48T_3(L).model")
+        wekaClassifier = WekaClassifier(requireContext(), "J48T_3(L)_withFilter.model")
     }
 
     override fun onCreateView(
@@ -85,7 +85,7 @@ class DashboardFragment : Fragment(), SensorEventListener {
             binding.textActivity.text = data
         }
 
-        val testClassifier: Classifier? = loadWekaModelFromAssets(requireContext(), "J48T_3(L).model")
+        val testClassifier: Classifier? = loadWekaModelFromAssets(requireContext(), "J48T_3(L)_withFilter.model")
 
         if (testClassifier != null) {
             // The model was loaded successfully.
@@ -171,7 +171,7 @@ class DashboardFragment : Fragment(), SensorEventListener {
             sensorBuffer.add(combinedData)
 
             // 50 readings = 1 second (at 50hz)
-            val maxBufferSize = 250
+            val maxBufferSize = 25
             if (sensorBuffer.size > maxBufferSize) {
                 sensorBuffer.removeAt(0)
             }
