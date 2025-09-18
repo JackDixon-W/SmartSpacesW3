@@ -145,7 +145,7 @@ class DashboardFragment : Fragment(), SensorEventListener {
             }
         }
 
-        bufferSensorData()
+        classifyData()
     }
 
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
@@ -157,65 +157,16 @@ class DashboardFragment : Fragment(), SensorEventListener {
         _binding = null
     }
 
-    private fun bufferSensorData() {
-        // Ensure all sensor data is available before proceeding
-        //if (accelerometerData != null && linearAccelerometerData != null && gyroscopeData != null && magnetometerData != null) {
+    private fun classifyData() {
         if (accelerometerData != null && linearAccelerometerData != null && gyroscopeData != null) {
-
             val combinedData = floatArrayOf(
                 *accelerometerData!!,
                 *linearAccelerometerData!!,
-                *gyroscopeData!!,
+                *gyroscopeData!!
             )
 
-            sensorBuffer.add(combinedData)
-
-            // 50 readings = 1 second (at 50hz)
-            val maxBufferSize = 25
-            if (sensorBuffer.size > maxBufferSize) {
-                sensorBuffer.removeAt(0)
-            }
-
-            if (sensorBuffer.size >= maxBufferSize) {
-                val features = calcMean()
-
-                if (features != null) {
-                    val predictedActivity = wekaClassifier.classify(features)
-
-                    Log.d("WekaClassification", "Predicted Activity: $predictedActivity")
-
-                    dashboardViewModel.updatePredictedActivity(predictedActivity)
-                }
-            }
+            val predictedActivity = wekaClassifier.classify(combinedData)
+            dashboardViewModel.updatePredictedActivity(predictedActivity)
         }
-    }
-
-    private fun calcMean(): FloatArray? {
-        // Prevent division by 0
-        if (sensorBuffer.isEmpty()) {
-            return null
-        }
-
-        // 3 axis * 4 sensors in this case
-        //val numFeatures = 12
-        // 3 axis * 3 sensors
-        val numFeatures = 9
-        val featureSums = FloatArray(numFeatures)
-
-        // Sum values for each feature
-        for (reading in sensorBuffer) {
-            for (i in 0 until numFeatures) {
-                featureSums[i] += reading[i]
-            }
-        }
-
-        // Calculate the mean
-        val numReadings = sensorBuffer.size
-        val meanFeatures = FloatArray(numFeatures)
-        for (i in 0 until numFeatures) {
-            meanFeatures[i] = featureSums[i] / numReadings
-        }
-
-        return meanFeatures
     }
 }
