@@ -49,7 +49,7 @@ class DashboardFragment : Fragment(), SensorEventListener {
         linearAccelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION)
         gyroscope = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE)
         magnetometer = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD)
-        wekaClassifier = WekaClassifier(requireContext(), "J48T_3(L).model")
+        wekaClassifier = WekaClassifier(requireContext(), "J48T_3(L).model", "standardise_filter.bin")
     }
 
     override fun onCreateView(

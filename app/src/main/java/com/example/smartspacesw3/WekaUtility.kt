@@ -7,13 +7,27 @@ import weka.core.SerializationHelper
 import java.io.InputStream
 import weka.core.Attribute
 import weka.core.Instances
+import weka.filters.Filter
 import java.util.ArrayList
 
 fun loadWekaModelFromAssets(context: Context, modelName: String): Classifier? {
     return try {
         val assetManager = context.assets
         val modelInputStream: InputStream = assetManager.open(modelName)
+        Log.i("Load Weka", "Weka model loaded")
         SerializationHelper.read(modelInputStream) as Classifier
+    } catch (e: Exception) {
+        e.printStackTrace()
+        null
+    }
+}
+
+fun loadWekaFilterFromAssets(context: Context, filterName: String): Filter? {
+    return try {
+        val assetManager = context.assets
+        val filterInputStream: InputStream = assetManager.open(filterName)
+        Log.i("Load Weka", "Weka filter loaded")
+        SerializationHelper.read(filterInputStream) as Filter
     } catch (e: Exception) {
         e.printStackTrace()
         null
