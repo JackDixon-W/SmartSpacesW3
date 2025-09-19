@@ -10,7 +10,6 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.example.smartspacesw3.WekaClassifier
@@ -19,6 +18,8 @@ import com.example.smartspacesw3.databinding.FragmentDashboardBinding
 import com.example.smartspacesw3.loadWekaModelFromAssets
 import weka.classifiers.Classifier
 import weka.core.Instances
+import java.util.Queue
+import java.util.LinkedList
 
 class DashboardFragment : Fragment(), SensorEventListener {
 
@@ -37,10 +38,12 @@ class DashboardFragment : Fragment(), SensorEventListener {
     private var accelerometerData: FloatArray? = null
     private var linearAccelerometerData: FloatArray? = null
     private var gyroscopeData: FloatArray? = null
-    private var magnetometerData: FloatArray? = null
-    private var sensorBuffer: MutableList<FloatArray> = mutableListOf()
 
     private lateinit var wekaClassifier: WekaClassifier
+    private lateinit var wekaHeader: Instances
+
+    private val BUFFER_SIZE = 50 // running at 50hz
+    private val sensorDataBuffer: Queue<FloatArray> = LinkedList()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -50,6 +53,7 @@ class DashboardFragment : Fragment(), SensorEventListener {
         gyroscope = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE)
         magnetometer = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD)
         wekaClassifier = WekaClassifier(requireContext(), "J48T_3(L)_withFilter.model")
+        wekaHeader = createWekaInstancesHeader()
     }
 
     override fun onCreateView(
@@ -145,7 +149,7 @@ class DashboardFragment : Fragment(), SensorEventListener {
             }
         }
 
-        classifyData()
+        handleData()
     }
 
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
@@ -157,7 +161,16 @@ class DashboardFragment : Fragment(), SensorEventListener {
         _binding = null
     }
 
-    private fun classifyData() {
+    private fun bufferData(newSensorInstance: FloatArray) {
+        // Add to end of Queue
+        sensorDataBuffer.add(newSensorInstance)
+
+        if (sensorDataBuffer.size > BUFFER_SIZE) {
+            sensorDataBuffer.remove()
+        }
+    }
+
+    private fun handleData() {
         if (accelerometerData != null && linearAccelerometerData != null && gyroscopeData != null) {
             val combinedData = floatArrayOf(
                 *accelerometerData!!,
@@ -165,8 +178,36 @@ class DashboardFragment : Fragment(), SensorEventListener {
                 *gyroscopeData!!
             )
 
-            val predictedActivity = wekaClassifier.classify(combinedData)
+            bufferData(combinedData)
+
+            classifyData()
+        }
+    }
+
+    private fun classifyData() {
+        if (sensorDataBuffer.size < BUFFER_SIZE) {
+            Log.d("Classifier", "Buffer not full yet, cannot classify.")
+            return
+        }
+
+        val numAttributes = 9 * BUFFER_SIZE
+        val flattenedData = FloatArray(numAttributes)
+        var i = 0
+
+        // Flattens the data for weka processing
+        sensorDataBuffer.forEach { sensorInstance ->
+            sensorInstance.forEach { value ->
+                if (i < flattenedData.size) {
+                    flattenedData[i++] = value.toFloat()
+                }
+            }
+        }
+
+        try {
+            val predictedActivity = wekaClassifier.classify(flattenedData)
             dashboardViewModel.updatePredictedActivity(predictedActivity)
+        } catch (e: Exception) {
+            Log.e("Classifier", "Classification failed: ${e.message}")
         }
     }
 }
