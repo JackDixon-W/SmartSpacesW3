@@ -3,6 +3,7 @@ package com.example.smartspacesw3.ui.dashboard
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import com.example.smartspacesw3.R
 
 class DashboardViewModel : ViewModel() {
 
@@ -20,6 +21,9 @@ class DashboardViewModel : ViewModel() {
 
     private val _predictedActivity = MutableLiveData<String>()
     val predictedActivity: LiveData<String> = _predictedActivity
+
+    private val _predictedImage = MutableLiveData<Int>()
+    val predictedImage: LiveData<Int> = _predictedImage
 
     fun updateAccelerometerData(x: Float, y: Float, z: Float) {
         _accelerometerData.value = "Accelerometer\nX: $x\nY: $y\nZ: $z"
@@ -39,5 +43,17 @@ class DashboardViewModel : ViewModel() {
 
     fun updatePredictedActivity(activity: String) {
         _predictedActivity.value = "Activity: $activity"
+    }
+
+    fun updatePredictedImage(activity: String) {
+        _predictedImage.value = when (activity) {
+            "sitting" -> R.drawable.sitting
+            "standing" -> R.drawable.standing
+            "walking" -> R.drawable.walking
+            "upstairs" -> R.drawable.upstairs
+            "downstairs" -> R.drawable.downstairs
+            "jogging" -> R.drawable.jogging
+            else -> R.drawable.ic_launcher_foreground
+        }
     }
 }

@@ -206,6 +206,7 @@ class DashboardFragment : Fragment(), SensorEventListener {
         try {
             val predictedActivity = wekaClassifier.classify(flattenedData)
             dashboardViewModel.updatePredictedActivity(predictedActivity)
+            dashboardViewModel.updatePredictedImage(predictedActivity)
         } catch (e: Exception) {
             Log.e("Classifier", "Classification failed: ${e.message}")
         }
