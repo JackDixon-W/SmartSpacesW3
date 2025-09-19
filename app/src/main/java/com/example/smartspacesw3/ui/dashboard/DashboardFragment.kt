@@ -52,7 +52,7 @@ class DashboardFragment : Fragment(), SensorEventListener {
         linearAccelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION)
         gyroscope = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE)
         magnetometer = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD)
-        wekaClassifier = WekaClassifier(requireContext(), "J48T_3(L)_withFilter.model")
+        wekaClassifier = WekaClassifier(requireContext(), "J48T_3(L)_Window.model")
         wekaHeader = createWekaInstancesHeader()
     }
 
@@ -89,7 +89,7 @@ class DashboardFragment : Fragment(), SensorEventListener {
             binding.textActivity.text = data
         }
 
-        val testClassifier: Classifier? = loadWekaModelFromAssets(requireContext(), "J48T_3(L)_withFilter.model")
+        val testClassifier: Classifier? = loadWekaModelFromAssets(requireContext(), "J48T_3(L)_Window.model")
 
         if (testClassifier != null) {
             // The model was loaded successfully.
@@ -107,16 +107,16 @@ class DashboardFragment : Fragment(), SensorEventListener {
     override fun onResume() {
         super.onResume()
         accelerometer?.also { sensor ->
-            sensorManager.registerListener(this, sensor, SensorManager.SENSOR_DELAY_NORMAL)
+            sensorManager.registerListener(this, sensor, SensorManager.SENSOR_DELAY_GAME)
         }
         linearAccelerometer?.also { sensor ->
-            sensorManager.registerListener(this, sensor, SensorManager.SENSOR_DELAY_NORMAL)
+            sensorManager.registerListener(this, sensor, SensorManager.SENSOR_DELAY_GAME)
         }
         gyroscope?.also { sensor ->
-            sensorManager.registerListener(this, sensor, SensorManager.SENSOR_DELAY_NORMAL)
+            sensorManager.registerListener(this, sensor, SensorManager.SENSOR_DELAY_GAME)
         }
         magnetometer?.also { sensor ->
-            sensorManager.registerListener(this, sensor, SensorManager.SENSOR_DELAY_NORMAL)
+            sensorManager.registerListener(this, sensor, SensorManager.SENSOR_DELAY_GAME)
         }
     }
 
