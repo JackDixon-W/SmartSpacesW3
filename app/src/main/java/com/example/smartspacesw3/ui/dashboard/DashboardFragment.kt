@@ -81,9 +81,9 @@ class DashboardFragment : Fragment(), SensorEventListener {
             binding.textGyroscope.text = data
         }
 
-        dashboardViewModel.magnetometerData.observe(viewLifecycleOwner) { data ->
-            binding.textMagnetometer.text = data
-        }
+//        dashboardViewModel.magnetometerData.observe(viewLifecycleOwner) { data ->
+//            binding.textMagnetometer.text = data
+//        }
 
         dashboardViewModel.predictedActivity.observe(viewLifecycleOwner) { data ->
             binding.textActivity.text = data
@@ -143,10 +143,10 @@ class DashboardFragment : Fragment(), SensorEventListener {
                 dashboardViewModel.updateGyroscopeData(x, y, z)
                 gyroscopeData = event.values.clone()
             }
-            Sensor.TYPE_MAGNETIC_FIELD -> {
-                dashboardViewModel.updateMagnetometerData(x, y, z)
-                //magnetometerData = event.values.clone()
-            }
+//            Sensor.TYPE_MAGNETIC_FIELD -> {
+//                dashboardViewModel.updateMagnetometerData(x, y, z)
+//                //magnetometerData = event.values.clone()
+//            }
         }
 
         handleData()
