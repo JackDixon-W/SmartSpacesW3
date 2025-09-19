@@ -89,6 +89,10 @@ class DashboardFragment : Fragment(), SensorEventListener {
             binding.textActivity.text = data
         }
 
+        dashboardViewModel.predictedImage.observe(viewLifecycleOwner) { resourceId ->
+            binding.imageActivity.setImageResource(resourceId)
+        }
+
         val testClassifier: Classifier? = loadWekaModelFromAssets(requireContext(), "J48T_3(L)_Window.model")
 
         if (testClassifier != null) {
@@ -206,7 +210,6 @@ class DashboardFragment : Fragment(), SensorEventListener {
         try {
             val predictedActivity = wekaClassifier.classify(flattenedData)
             dashboardViewModel.updatePredictedActivity(predictedActivity)
-            dashboardViewModel.updatePredictedImage(predictedActivity)
         } catch (e: Exception) {
             Log.e("Classifier", "Classification failed: ${e.message}")
         }

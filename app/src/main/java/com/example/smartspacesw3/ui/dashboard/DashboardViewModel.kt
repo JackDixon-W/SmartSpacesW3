@@ -43,6 +43,7 @@ class DashboardViewModel : ViewModel() {
 
     fun updatePredictedActivity(activity: String) {
         _predictedActivity.value = "Activity: $activity"
+        updatePredictedImage(activity)
     }
 
     fun updatePredictedImage(activity: String) {
